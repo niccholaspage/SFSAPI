@@ -1,0 +1,36 @@
+group 'com.nicholasnassar.sfsapi'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'idea'
+
+sourceCompatibility = 1.8
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'com.nicholasnassar.sfsapi.web.WebHandler'
+    }
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+ext {
+    nettyVersion = '4.0.41.Final'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile "io.netty:netty-buffer:$nettyVersion"
+    compile "io.netty:netty-codec-http:$nettyVersion"
+    compile "io.netty:netty-codec:$nettyVersion"
+    compile "io.netty:netty-common:$nettyVersion"
+    compile "io.netty:netty-transport:$nettyVersion"
+    compile "io.netty:netty-handler:$nettyVersion"
+    compile "io.netty:netty-transport-native-epoll:$nettyVersion"
+    compile "org.apache.httpcomponents:httpasyncclient:4.1.2"
+    compile "org.jsoup:jsoup:1.9.2"
+    compile "io.vertx:vertx-web:3.3.3"
+}
