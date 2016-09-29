@@ -345,6 +345,12 @@ public class SFS {
                 }
             }
 
+            /* Test missing work assignments
+            missingWork.add(new MissingAssignment(new Link(LinkType.ASSIGNMENT, "123"), "9/30/2016", "Test Class 1",
+                    "Test Assignment", "5", "5", "Some comments"));
+            missingWork.add(new MissingAssignment(new Link(LinkType.ASSIGNMENT, "1243"), "9/31/2016", "Test Class 2",
+                    "Test Assignment 2", "5", "5", "Some comments"));*/
+
             return new Grades(grades, missingWork);
         });
     }
@@ -572,13 +578,15 @@ public class SFS {
 
             String from = rows.first().select("td").last().text();
 
-            String to = rows.get(1).select("td").last().text();
+            String to = rows.get(1).select("td").last().html();
+
+            to = to.replace("<br>", ", ");
 
             String date = rows.get(2).select("td").last().text();
 
             String subject = rows.get(3).select("td").last().text();
 
-            String description = rows.last().select("td").first().text();
+            String description = rows.last().select("td").first().html();
 
             return new Announcement(from, to, date, subject, description);
         });
