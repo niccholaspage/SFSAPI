@@ -1,6 +1,5 @@
 package com.nicholasnassar.sfsapi.data.assignments;
 
-import com.nicholasnassar.sfsapi.data.assignments.AssignmentDay;
 import io.vertx.core.json.JsonArray;
 
 import java.util.List;
