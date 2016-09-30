@@ -7,7 +7,7 @@ import io.vertx.core.json.JsonObject;
 public class Grade {
     private final Link link;
 
-    private String term, clazz, instructor, score;
+    private final String term, clazz, instructor, score;
 
     public Grade(String id, String term, String clazz, String instructor, String score) {
         this.link = new Link(LinkType.GRADE, id);
