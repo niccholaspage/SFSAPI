@@ -19,7 +19,7 @@ public enum LinkType {
         return name;
     }
 
-    public static LinkType matchType(String match) {
+    private static LinkType matchType(String match) {
         outerLoop:
         for (LinkType type : values()) {
             for (String matchingPhrase : type.matching) {

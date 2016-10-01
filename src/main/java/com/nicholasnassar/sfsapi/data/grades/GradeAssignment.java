@@ -32,42 +32,6 @@ public class GradeAssignment {
         this.comments = comments;
     }
 
-    public Link getLink() {
-        return link;
-    }
-
-    public String getDateDue() {
-        return dateDue;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public String getAssignment() {
-        return assignment;
-    }
-
-    public String getPossiblePoints() {
-        return possiblePoints;
-    }
-
-    public String getScore() {
-        return score;
-    }
-
-    public String getPercentage() {
-        return percentage;
-    }
-
-    public String getLetterGrade() {
-        return letterGrade;
-    }
-
-    public String getComments() {
-        return comments;
-    }
-
     public JsonObject asJson() {
         return new JsonObject().put("link", link == null ? null : link.asJson()).put("date_due", dateDue)
                 .put("category", category).put("assignment", assignment).put("possible_points", possiblePoints)

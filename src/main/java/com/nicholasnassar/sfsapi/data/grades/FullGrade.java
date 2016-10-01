@@ -11,10 +11,6 @@ public class FullGrade {
         this.assignments = assignments;
     }
 
-    public List<GradeAssignment> getAssignments() {
-        return assignments;
-    }
-
     public JsonObject asJson() {
         return new JsonObject().put("assignments", GradeAssignment.asJsonArray(assignments));
     }
