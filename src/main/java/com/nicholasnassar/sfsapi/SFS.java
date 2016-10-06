@@ -407,7 +407,7 @@ public class SFS {
     }
 
     public CompletableFuture<List<Assignment>> fetchAssignmentsInTaskList(String cookie) {
-        HttpGet get = new HttpGet(BASE_URL + "parents/AssignmentViewAll_Calendar.aspx?showrecentassignments=true");
+        HttpGet get = new HttpGet(BASE_URL + "parents/AssignmentViewAll_Calendar.aspx?showrecentassignments=true&datemode=3");
 
         ApacheCompletableFuture<HttpResponse> future = new ApacheCompletableFuture<>();
 
@@ -484,6 +484,7 @@ public class SFS {
 
         return future.thenApply(this::fetchDocument).thenApply(document -> {
             Element tableBody = document.select("table#tblMain > tbody").first();
+
             List<AssignmentDay> days = new ArrayList<>();
 
             for (Element tableRow : tableBody.children()) {
@@ -504,6 +505,45 @@ public class SFS {
             }
 
             return new AssignmentsWeek(days);
+        });
+    }
+
+    public CompletableFuture<List<AssignmentAll>> fetchAllAssignments(String cookie) {
+        HttpGet get = new HttpGet(BASE_URL
+                + "parents/AssignmentViewAll_Calendar.aspx?&showrecentassignments=true&datemode=4");
+
+        ApacheCompletableFuture<HttpResponse> future = new ApacheCompletableFuture<>();
+
+        client.execute(get, generateCookieContext(cookie), future);
+
+        return future.thenApply(this::fetchDocument).thenApply(document -> {
+            Element tableBody = document.select("table#tblMain > tbody").first();
+
+            List<AssignmentAll> assignments = new ArrayList<>();
+
+            for (Element tableRow : tableBody.children()) {
+                if (tableRow.children().size() == 1) {
+                    //Totals - TODO?
+                    continue;
+                }
+
+                String due = tableRow.child(0).text();
+
+                String clazz = tableRow.child(1).text();
+
+                Element assignment = tableRow.child(2);
+
+                String assignmentId = assignment.child(0).attr("href")
+                        .replace("../parents/AssignmentView.aspx?TestNameID=", "");
+
+                String notes = tableRow.child(3).text();
+
+                String resources = tableRow.child(4).text();
+
+                assignments.add(new AssignmentAll(assignmentId, due, clazz, assignment.text(), notes, resources));
+            }
+
+            return assignments;
         });
     }
 

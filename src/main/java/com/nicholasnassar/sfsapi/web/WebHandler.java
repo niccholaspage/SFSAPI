@@ -3,6 +3,7 @@ package com.nicholasnassar.sfsapi.web;
 import com.nicholasnassar.sfsapi.SFS;
 import com.nicholasnassar.sfsapi.data.NewsFeedItem;
 import com.nicholasnassar.sfsapi.data.assignments.Assignment;
+import com.nicholasnassar.sfsapi.data.assignments.AssignmentAll;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonArray;
@@ -125,6 +126,20 @@ public class WebHandler {
             } else if (mode.equals("week")) {
                 api.fetchAssignmentsInWeek(json.getString("cookie")).thenAccept(assignmentsWeek -> {
                     ctx.response().end(assignmentsWeek.asJsonArray().encode());
+                });
+            } else if (mode.equals("all")) {
+                api.fetchAllAssignments(json.getString("cookie")).thenAccept(allAssignments -> {
+                    JsonObject response = new JsonObject();
+
+                    JsonArray assignmentsJson = new JsonArray();
+
+                    for (AssignmentAll assignment : allAssignments) {
+                        assignmentsJson.add(assignment.asJson());
+                    }
+
+                    response.put("assignments", assignmentsJson);
+
+                    ctx.response().end(response.encode());
                 });
             }
         });
