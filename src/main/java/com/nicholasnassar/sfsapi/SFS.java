@@ -44,6 +44,8 @@ public class SFS {
 
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.101 Safari/537.36";
 
+    private static final String CURRENT_TERM = "2016-17 Q1";
+
     private final DecimalFormat gpaTruncate;
 
     private final CloseableHttpAsyncClient client;
@@ -359,15 +361,6 @@ public class SFS {
         return fetchGrades(cookie).thenApply(grades -> {
             List<Grade> allGrades = grades.getGrades();
 
-            String term = allGrades.get(0).getTerm();
-
-            //TODO: Remove this weird term check for weird circumstances like quarter switches
-            for (Grade grade : allGrades) {
-                if (!term.equals(grade.getTerm())) {
-                    return new GPACalculation(new ArrayList<>());
-                }
-            }
-
             int classesCount = 0;
 
             double gpa = 0;
@@ -377,7 +370,7 @@ public class SFS {
             for (Grade grade : allGrades) {
                 String score = grade.getScore();
 
-                if (score.equals("Details")) {
+                if (score.equals("Details") || !grade.getTerm().equals(CURRENT_TERM)) {
                     continue;
                 }
 
