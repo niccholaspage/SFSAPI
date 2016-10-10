@@ -558,7 +558,7 @@ public class SFS {
 
             String clazz = null, instructor = null, assigned = null, due = null, possiblePoints = null;
 
-            String category = null, notes = null, resourceName = null, resourceLink = null;
+            String category = null, notes = null;
 
             List<Resource> resources = new ArrayList<>();
 
