@@ -366,6 +366,8 @@ public class SFS {
 
             double gpa = 0;
 
+            double maxGPA = 0;
+
             List<GPAClass> classes = new ArrayList<>();
 
             for (Grade grade : allGrades) {
@@ -387,14 +389,20 @@ public class SFS {
 
                 gpa += classScore;
 
-                classes.add(new GPAClass(grade.getClazz(), letterGrade.getName(), classScore));
+                maxGPA += scale.getScore(LetterGrade.A_PLUS);
+
+                classes.add(new GPAClass(grade.getClazz(), letterGrade.getName(), classScore + ""));
             }
 
             gpa /= classesCount;
 
+            maxGPA /= classesCount;
+
             gpa = Double.parseDouble(gpaTruncate.format(gpa));
 
-            classes.add(new GPAClass("Your GPA", null, gpa));
+            maxGPA = Double.parseDouble(gpaTruncate.format(maxGPA));
+
+            classes.add(new GPAClass("Total", "Your GPA: " + gpa, "Max: " + maxGPA));
 
             return new GPACalculation(classes);
         });

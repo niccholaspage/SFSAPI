@@ -3,11 +3,9 @@ package com.nicholasnassar.sfsapi.data.gpa;
 import io.vertx.core.json.JsonObject;
 
 public class GPAClass {
-    private final String name, letterGrade;
+    private final String name, letterGrade, points;
 
-    private final double points;
-
-    public GPAClass(String name, String letterGrade, double points) {
+    public GPAClass(String name, String letterGrade, String points) {
         this.name = name;
 
         this.letterGrade = letterGrade;
