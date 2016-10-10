@@ -408,7 +408,7 @@ public class SFS {
         });
     }
 
-    public CompletableFuture<List<Assignment>> fetchAssignmentsInTaskList(String cookie) {
+    public CompletableFuture<List<AssignmentTaskList>> fetchAssignmentsInTaskList(String cookie) {
         HttpGet get = new HttpGet(BASE_URL + "parents/AssignmentViewAll_Calendar.aspx?showrecentassignments=true&datemode=3");
 
         ApacheCompletableFuture<HttpResponse> future = new ApacheCompletableFuture<>();
@@ -416,7 +416,7 @@ public class SFS {
         client.execute(get, generateCookieContext(cookie), future);
 
         return future.thenApply(this::fetchDocument).thenApply(document -> {
-            List<Assignment> assignments = new ArrayList<>();
+            List<AssignmentTaskList> assignments = new ArrayList<>();
 
             Element tableBody = document.select("table#tblMain > tbody").first();
 
@@ -428,7 +428,9 @@ public class SFS {
                 for (Element element : tableBody.children()) {
                     String name;
 
-                    Element activity, dateDue, resource;
+                    Element activity, dateDue;
+
+                    int resources;
 
                     if (classSpan != 0) {
                         name = previousName;
@@ -437,7 +439,7 @@ public class SFS {
 
                         dateDue = element.child(1);
 
-                        resource = element.child(2);
+                        resources = element.child(2).select("table > tbody > tr").size();
 
                         classSpan--;
                     } else {
@@ -457,17 +459,12 @@ public class SFS {
 
                         dateDue = element.child(2);
 
-                        resource = element.child(3);
-                    }
-
-                    if (!resource.text().isEmpty()) {
-                        resource = resource.getElementsByClass("resourcedescriptioncell").get(0);
+                        resources = element.child(3).select("table > tbody > tr").size();
                     }
 
                     String id = activity.select("a").attr("href").replace("../parents/AssignmentView.aspx?TestNameID=", "");
 
-                    assignments.add(new Assignment(id, name, activity.text(), "Due " + dateDue.text(),
-                            resource.text().isEmpty() ? "" : "Resource: " + resource.text()));
+                    assignments.add(new AssignmentTaskList(id, name, activity.text(), "Due " + dateDue.text(), resources));
                 }
             } catch (Exception e) {
                 e.printStackTrace();

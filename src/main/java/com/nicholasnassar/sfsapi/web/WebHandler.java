@@ -2,7 +2,7 @@ package com.nicholasnassar.sfsapi.web;
 
 import com.nicholasnassar.sfsapi.SFS;
 import com.nicholasnassar.sfsapi.data.NewsFeedItem;
-import com.nicholasnassar.sfsapi.data.assignments.Assignment;
+import com.nicholasnassar.sfsapi.data.assignments.AssignmentTaskList;
 import com.nicholasnassar.sfsapi.data.assignments.AssignmentAll;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
@@ -115,7 +115,7 @@ public class WebHandler {
 
                     JsonArray assignmentsJson = new JsonArray();
 
-                    for (Assignment assignment : assignments) {
+                    for (AssignmentTaskList assignment : assignments) {
                         assignmentsJson.add(assignment.asJson());
                     }
 
