@@ -10,6 +10,7 @@ import com.nicholasnassar.sfsapi.data.grades.*;
 import com.nicholasnassar.sfsapi.data.links.LetterGrade;
 import com.nicholasnassar.sfsapi.data.links.Link;
 import com.nicholasnassar.sfsapi.data.links.LinkType;
+import com.nicholasnassar.sfsapi.data.links.Resource;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -554,12 +555,12 @@ public class SFS {
 
             String category = null, notes = null, resourceName = null, resourceLink = null;
 
-            Elements resourceElement = document.select("table#ResourceTbl > tbody > tr > td > a");
+            List<Resource> resources = new ArrayList<>();
 
-            if (resourceElement != null) {
-                resourceName = resourceElement.text();
+            for (Element resourceElement : document.select("table#ResourceTbl > tbody > tr")) {
+                Element link = resourceElement.getElementsByTag("a").first();
 
-                resourceLink = resourceElement.attr("href");
+                resources.add(new Resource(link.text(), link.attr("href")));
             }
 
             for (Element tableRow : document.select("table#DetailsTbl > tbody > tr")) {
@@ -593,7 +594,7 @@ public class SFS {
             }
 
             return new FullAssignment(activity, clazz, instructor, assigned, due, possiblePoints, category, notes,
-                    resourceName, resourceLink);
+                    resources);
         });
     }
 
