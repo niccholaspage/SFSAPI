@@ -47,7 +47,6 @@ public class Resource {
 
         resources.forEach(resource -> array.add(resource.asJson()));
 
-
         return array;
     }
 }
