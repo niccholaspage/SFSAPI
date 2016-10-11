@@ -373,7 +373,7 @@ public class SFS {
             for (Grade grade : allGrades) {
                 String score = grade.getScore();
 
-                if (score.equals("Details") || !grade.getTerm().equals(CURRENT_TERM)) {
+                if (score.equals("Details") || score.equals("P") || !grade.getTerm().equals(CURRENT_TERM)) {
                     continue;
                 }
 
