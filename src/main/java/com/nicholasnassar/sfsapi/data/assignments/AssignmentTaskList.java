@@ -25,6 +25,6 @@ public class AssignmentTaskList {
 
     public JsonObject asJson() {
         return new JsonObject().put("link", link.asJson()).put("class", clazz).put("activity", activity)
-                .put("date_due", dateDue).put("resources", resources);
+                .put("date_due", dateDue).put("resources", resources).put("resource", "");
     }
 }
