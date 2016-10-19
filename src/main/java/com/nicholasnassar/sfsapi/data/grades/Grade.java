@@ -1,16 +1,15 @@
 package com.nicholasnassar.sfsapi.data.grades;
 
-import com.nicholasnassar.sfsapi.data.links.Link;
-import com.nicholasnassar.sfsapi.data.links.LinkType;
+import com.nicholasnassar.sfsapi.data.links.GradeLink;
 import io.vertx.core.json.JsonObject;
 
 public class Grade {
-    private final Link link;
+    private final GradeLink link;
 
     private final String term, clazz, instructor, score;
 
-    public Grade(String id, String term, String clazz, String instructor, String score) {
-        this.link = new Link(LinkType.GRADE, id);
+    public Grade(GradeLink link, String term, String clazz, String instructor, String score) {
+        this.link = link;
 
         this.term = term;
 

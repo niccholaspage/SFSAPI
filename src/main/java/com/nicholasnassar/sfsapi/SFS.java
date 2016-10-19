@@ -7,10 +7,7 @@ import com.nicholasnassar.sfsapi.data.assignments.*;
 import com.nicholasnassar.sfsapi.data.gpa.GPACalculation;
 import com.nicholasnassar.sfsapi.data.gpa.GPAClass;
 import com.nicholasnassar.sfsapi.data.grades.*;
-import com.nicholasnassar.sfsapi.data.links.LetterGrade;
-import com.nicholasnassar.sfsapi.data.links.Link;
-import com.nicholasnassar.sfsapi.data.links.LinkType;
-import com.nicholasnassar.sfsapi.data.links.Resource;
+import com.nicholasnassar.sfsapi.data.links.*;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -215,8 +212,8 @@ public class SFS {
         return linkHref;
     }
 
-    public CompletableFuture<FullGrade> fetchGradeDetails(String cookie, String id) {
-        HttpGet get = new HttpGet(BASE_URL + "parents/StudentProgressView.aspx?ClassID=" + id);
+    public CompletableFuture<FullGrade> fetchGradeDetails(String cookie, String classId, String cgpId) {
+        HttpGet get = new HttpGet(BASE_URL + "parents/StudentProgressView.aspx?ClassID=" + classId + "&CGPID=" + cgpId);
 
         ApacheCompletableFuture<HttpResponse> future = new ApacheCompletableFuture<>();
 
@@ -232,6 +229,8 @@ public class SFS {
             Element table = document.select("table.ViewAllTable > tbody").first();
 
             List<GradeAssignment> gradeAssignments = new ArrayList<>();
+
+            double totalPoints = 0, totalScore = 0;
 
             for (int i = 1; i < table.children().size(); i++) {
                 Element row = table.child(i);
@@ -260,6 +259,22 @@ public class SFS {
                     percentage = trim(row.child(4).text());
                     letterGrade = trim(row.child(5).text());
                     comments = trim(row.child(6).text());
+
+                    if (assignment != null && assignment.equals("Total")) {
+                        possiblePoints = totalPoints + "";
+
+                        score = totalScore + "";
+                    } else {
+                        try {
+                            double assignmentPoints = Double.parseDouble(possiblePoints);
+                            double assignmentScore = Double.parseDouble(score);
+
+                            totalPoints += assignmentPoints;
+                            totalScore += assignmentScore;
+                        } catch (Exception e) {
+                            //Parse errors mean that this assignment shouldn't be counted
+                        }
+                    }
                 }
 
                 String assignmentId = null;
@@ -278,7 +293,7 @@ public class SFS {
                 if (assignmentId.isEmpty()) {
                     link = null;
                 } else {
-                    link = new Link(LinkType.ASSIGNMENT, assignmentId);
+                    link = new AssignmentLink(assignmentId);
                 }
 
                 GradeAssignment gradeAssignment = new GradeAssignment(link, dateDue, category, assignment,
@@ -318,12 +333,10 @@ public class SFS {
 
                 String id = currentScore.select("a").attr("href");
 
-                id = id.substring(id.indexOf("=") + 1);
+                GradeLink link = (GradeLink) LinkType.generateLink(id);
 
-                id = id.substring(0, id.indexOf("&"));
-
-                grades.add(new Grade(id, element.child(0).text(),
-                        element.child(1).text(), element.child(2).text(), currentScore.text()));
+                grades.add(new Grade(link, element.child(0).text(), element.child(1).text(), element.child(2).text(),
+                        currentScore.text()));
             }
 
             List<MissingAssignment> missingWork = new ArrayList<>();
@@ -496,8 +509,7 @@ public class SFS {
 
                     String assignmentName = assignment.text();
 
-                    assignments.add(new AssignmentNameAndLink(assignmentName, new Link(LinkType.ASSIGNMENT,
-                            assignmentId)));
+                    assignments.add(new AssignmentNameAndLink(assignmentName, new AssignmentLink(assignmentId)));
                 }
 
                 days.add(new AssignmentDay(date, assignments));

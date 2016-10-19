@@ -2,8 +2,8 @@ package com.nicholasnassar.sfsapi.web;
 
 import com.nicholasnassar.sfsapi.SFS;
 import com.nicholasnassar.sfsapi.data.NewsFeedItem;
-import com.nicholasnassar.sfsapi.data.assignments.AssignmentTaskList;
 import com.nicholasnassar.sfsapi.data.assignments.AssignmentAll;
+import com.nicholasnassar.sfsapi.data.assignments.AssignmentTaskList;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonArray;
@@ -161,13 +161,13 @@ public class WebHandler {
         });
 
         router.post("/gradedetails").handler(ctx -> {
-            if (!processContext(ctx, "id")) {
+            if (!processContext(ctx, "class_id", "cgp_id")) {
                 return;
             }
 
             JsonObject json = ctx.getBodyAsJson();
 
-            api.fetchGradeDetails(json.getString("cookie"), json.getString("id")).thenAccept(fullGrade -> {
+            api.fetchGradeDetails(json.getString("cookie"), json.getString("class_id"), json.getString("cgp_id")).thenAccept(fullGrade -> {
                 ctx.response().end(fullGrade.asJson().encode());
             });
         });

@@ -1,7 +1,7 @@
 package com.nicholasnassar.sfsapi.data.links;
 
 public enum LinkType {
-    GRADE("grade", "parents/StudentProgressView.aspx", "ClassID="),
+    GRADE("grade", "StudentProgressView.aspx", "ClassID="),
     ASSIGNMENT("assignment", "AssignmentView.aspx", "TestNameID="),
     ANNOUNCEMENT("announcement", "parents/AnnouncementView.aspx", "AnnouncementID=");
 
@@ -42,9 +42,17 @@ public enum LinkType {
         }
 
         if (type == GRADE) {
-            url = url.substring(url.indexOf("ClassID=") + 8);
+            String classId = url.substring(url.indexOf("ClassID=") + 8);
 
-            url = url.substring(0, url.indexOf("&"));
+            classId = classId.substring(0, classId.indexOf("&"));
+
+            String cgpId = url.substring(url.indexOf("CGPID=") + 6);
+
+            if (cgpId.contains("&")) {
+                cgpId = cgpId.substring(0, cgpId.indexOf("&"));
+            }
+
+            return new GradeLink(classId, cgpId);
         } else if (type == ASSIGNMENT) {
             url = url.substring(url.indexOf("TestNameID=") + 11);
 
@@ -53,10 +61,14 @@ public enum LinkType {
             if (index != -1) {
                 url = url.substring(0, index);
             }
+
+            return new AssignmentLink(url);
         } else if (type == ANNOUNCEMENT) {
             url = url.substring(url.indexOf("AnnouncementID=") + 15);
+
+            return new AnnouncementLink(url);
         }
 
-        return new Link(type, url);
+        return null;
     }
 }

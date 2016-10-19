@@ -1,7 +1,7 @@
 package com.nicholasnassar.sfsapi.data.assignments;
 
+import com.nicholasnassar.sfsapi.data.links.AssignmentLink;
 import com.nicholasnassar.sfsapi.data.links.Link;
-import com.nicholasnassar.sfsapi.data.links.LinkType;
 import io.vertx.core.json.JsonObject;
 
 public class AssignmentTaskList {
@@ -12,7 +12,7 @@ public class AssignmentTaskList {
     private final int resources;
 
     public AssignmentTaskList(String id, String clazz, String activity, String dateDue, int resources) {
-        link = new Link(LinkType.ASSIGNMENT, id);
+        link = new AssignmentLink(id);
 
         this.clazz = clazz;
 
