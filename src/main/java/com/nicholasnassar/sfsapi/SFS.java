@@ -42,7 +42,7 @@ public class SFS {
 
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.101 Safari/537.36";
 
-    private static final String CURRENT_TERM = "2016-17 Q1";
+    private static final String CURRENT_TERM = "2016-17 Q2";
 
     private final DecimalFormat gpaTruncate;
 
