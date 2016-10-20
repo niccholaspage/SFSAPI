@@ -77,13 +77,13 @@ public class WebHandler {
         });
 
         router.post("/grades").handler(ctx -> {
-            if (!processContext(ctx)) {
+            if (!processContext(ctx, "show_all_classes")) {
                 return;
             }
 
             JsonObject json = ctx.getBodyAsJson();
 
-            api.fetchGrades(json.getString("cookie")).thenAccept(grades -> {
+            api.fetchGrades(json.getString("cookie"), json.getBoolean("show_all_classes")).thenAccept(grades -> {
                 ctx.response().end(grades.asJson().encode());
             });
         });

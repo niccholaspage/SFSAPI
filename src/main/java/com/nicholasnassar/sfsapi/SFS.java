@@ -312,8 +312,9 @@ public class SFS {
         return text.isEmpty() ? null : text;
     }
 
-    public CompletableFuture<Grades> fetchGrades(String cookie) {
-        HttpGet get = new HttpGet(BASE_URL + "parents/StudentProgressSummary_classic.aspx?");
+    public CompletableFuture<Grades> fetchGrades(String cookie, boolean showAllClasses) {
+        HttpGet get = new HttpGet(BASE_URL + "parents/StudentProgressSummary_classic.aspx?bCGPActive="
+                + (showAllClasses ? "NaN" : "1"));
 
         ApacheCompletableFuture<HttpResponse> future = new ApacheCompletableFuture<>();
 
@@ -372,7 +373,7 @@ public class SFS {
     }
 
     public CompletableFuture<GPACalculation> fetchGPA(String cookie) {
-        return fetchGrades(cookie).thenApply(grades -> {
+        return fetchGrades(cookie, false).thenApply(grades -> {
             List<Grade> allGrades = grades.getGrades();
 
             int classesCount = 0;
