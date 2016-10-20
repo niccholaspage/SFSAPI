@@ -376,7 +376,7 @@ public class SFS {
         return fetchGrades(cookie, false).thenApply(grades -> {
             List<Grade> allGrades = grades.getGrades();
 
-            int classesCount = 0;
+            double classesCount = 0;
 
             double gpa = 0;
 
@@ -391,7 +391,13 @@ public class SFS {
                     continue;
                 }
 
-                classesCount++;
+                boolean halfCredit = grade.getClazz().startsWith("PE ") || grade.getClazz().endsWith(" Flex");
+
+                if (halfCredit) {
+                    classesCount += 0.5;
+                } else {
+                    classesCount++;
+                }
 
                 String letterGradeFromScore = score.substring(score.indexOf(" = ") + 3);
 
@@ -401,9 +407,13 @@ public class SFS {
 
                 double classScore = scale.getScore(letterGrade);
 
+                if (halfCredit) {
+                    classScore /= 2;
+                }
+
                 gpa += classScore;
 
-                maxGPA += scale.getScore(LetterGrade.A_PLUS);
+                maxGPA += halfCredit ? scale.getScore(LetterGrade.A_PLUS) / 2 : scale.getScore(LetterGrade.A_PLUS);
 
                 classes.add(new GPAClass(grade.getClazz(), letterGrade.getName(), classScore + ""));
             }
