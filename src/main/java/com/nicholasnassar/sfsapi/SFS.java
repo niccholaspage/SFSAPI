@@ -47,6 +47,8 @@ public class SFS {
 
     private static final String CURRENT_TERM = "Q2";
 
+    private static final String[] PAST_TERMS = {"Q1", "Q2"};
+
     private final DecimalFormat gpaTruncate;
 
     private final CloseableHttpAsyncClient client;
@@ -428,7 +430,7 @@ public class SFS {
             }
 
             if (classesCount == 0) {
-                return new GPACalculation(Arrays.asList(new GPAClass("No classes yet", "", "")));
+                return new GPACalculation(Arrays.asList(new GPAClass("No classes yet", "", "")), PAST_TERMS);
             }
 
             gpa /= classesCount;
@@ -441,7 +443,7 @@ public class SFS {
 
             classes.add(new GPAClass("Total", "Your GPA: " + gpa, "Max: " + maxGPA));
 
-            return new GPACalculation(classes);
+            return new GPACalculation(classes, PAST_TERMS);
         });
     }
 

@@ -8,8 +8,12 @@ import java.util.List;
 public class GPACalculation {
     private final List<GPAClass> classes;
 
-    public GPACalculation(List<GPAClass> classes) {
+    private final String[] selectableTerms;
+
+    public GPACalculation(List<GPAClass> classes, String[] selectableTerms) {
         this.classes = classes;
+
+        this.selectableTerms = selectableTerms;
     }
 
     public JsonObject asJson() {
@@ -19,6 +23,12 @@ public class GPACalculation {
             array.add(clazz.asJson());
         }
 
-        return new JsonObject().put("classes", array);
+        JsonArray selectableTermsArray = new JsonArray();
+
+        for (String previousTerm : selectableTerms) {
+            selectableTermsArray.add(previousTerm);
+        }
+
+        return new JsonObject().put("classes", array).put("selectable_terms", selectableTermsArray);
     }
 }
