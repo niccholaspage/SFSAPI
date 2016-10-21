@@ -95,7 +95,13 @@ public class WebHandler {
 
             JsonObject json = ctx.getBodyAsJson();
 
-            api.fetchGPA(json.getString("cookie")).thenAccept(gpaCalculation -> {
+            String term = null;
+
+            if (json.containsKey("term")) {
+                term = json.getString("term");
+            }
+
+            api.fetchGPA(json.getString("cookie"), term).thenAccept(gpaCalculation -> {
                 ctx.response().end(gpaCalculation.asJson().encode());
             });
         });

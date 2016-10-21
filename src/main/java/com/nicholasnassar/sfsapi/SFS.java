@@ -32,6 +32,7 @@ import java.io.UnsupportedEncodingException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -378,8 +379,8 @@ public class SFS {
         });
     }
 
-    public CompletableFuture<GPACalculation> fetchGPA(String cookie) {
-        return fetchGrades(cookie, false).thenApply(grades -> {
+    public CompletableFuture<GPACalculation> fetchGPA(String cookie, String term) {
+        return fetchGrades(cookie, true).thenApply(grades -> {
             List<Grade> allGrades = grades.getGrades();
 
             double classesCount = 0;
@@ -388,12 +389,14 @@ public class SFS {
 
             double maxGPA = 0;
 
+            String calculateTerm = term == null ? CURRENT_TERM : term;
+
             List<GPAClass> classes = new ArrayList<>();
 
             for (Grade grade : allGrades) {
                 String score = grade.getScore();
 
-                if (score.equals("Details") || score.equals("P") || !grade.getTerm().equals(CURRENT_TERM)) {
+                if (score.equals("Details") || score.equals("P") || !grade.getTerm().equals(calculateTerm)) {
                     continue;
                 }
 
@@ -422,6 +425,10 @@ public class SFS {
                 maxGPA += halfCredit ? scale.getScore(LetterGrade.A_PLUS) / 2 : scale.getScore(LetterGrade.A_PLUS);
 
                 classes.add(new GPAClass(grade.getClazz(), letterGrade.getName(), classScore + ""));
+            }
+
+            if (classesCount == 0) {
+                return new GPACalculation(Arrays.asList(new GPAClass("No classes yet", "", "")));
             }
 
             gpa /= classesCount;
