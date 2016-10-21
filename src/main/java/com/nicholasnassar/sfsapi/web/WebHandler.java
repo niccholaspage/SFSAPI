@@ -128,7 +128,15 @@ public class WebHandler {
                     ctx.response().end(assignmentsWeek.asJsonArray().encode());
                 });
             } else if (mode.equals("all")) {
-                api.fetchAllAssignments(json.getString("cookie")).thenAccept(allAssignments -> {
+                String clazz;
+
+                if (json.containsKey("class")) {
+                    clazz = json.getString("class");
+                } else {
+                    clazz = null;
+                }
+
+                api.fetchAllAssignments(json.getString("cookie"), clazz).thenAccept(allAssignments -> {
                     JsonObject response = new JsonObject();
 
                     JsonArray assignmentsJson = new JsonArray();

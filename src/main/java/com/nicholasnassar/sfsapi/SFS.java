@@ -42,7 +42,9 @@ public class SFS {
 
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.101 Safari/537.36";
 
-    private static final String CURRENT_TERM = "2016-17 Q2";
+    private static final String CURRENT_YEAR = "2016-17";
+
+    private static final String CURRENT_TERM = "Q2";
 
     private final DecimalFormat gpaTruncate;
 
@@ -336,8 +338,12 @@ public class SFS {
 
                 GradeLink link = (GradeLink) LinkType.generateLink(id);
 
-                grades.add(new Grade(link, element.child(0).text(), element.child(1).text(), element.child(2).text(),
-                        currentScore.text()));
+                String term = element.child(0).text();
+
+                term = trim(term.replace(CURRENT_YEAR, "").trim());
+
+                grades.add(new Grade(link, term, trim(element.child(1).text()), trim(element.child(2).text()),
+                        trim(currentScore.text())));
             }
 
             List<MissingAssignment> missingWork = new ArrayList<>();
@@ -530,7 +536,7 @@ public class SFS {
         });
     }
 
-    public CompletableFuture<List<AssignmentAll>> fetchAllAssignments(String cookie) {
+    public CompletableFuture<List<AssignmentAll>> fetchAllAssignments(String cookie, String filteredClass) {
         HttpGet get = new HttpGet(BASE_URL
                 + "parents/AssignmentViewAll_Calendar.aspx?&showrecentassignments=true&datemode=4");
 
@@ -553,16 +559,18 @@ public class SFS {
 
                 String clazz = tableRow.child(1).text();
 
-                Element assignment = tableRow.child(2);
+                if (filteredClass == null || filteredClass.equals(clazz)) {
+                    Element assignment = tableRow.child(2);
 
-                String assignmentId = assignment.child(0).attr("href")
-                        .replace("../parents/AssignmentView.aspx?TestNameID=", "");
+                    String assignmentId = assignment.child(0).attr("href")
+                            .replace("../parents/AssignmentView.aspx?TestNameID=", "");
 
-                String notes = tableRow.child(3).text();
+                    String notes = tableRow.child(3).text();
 
-                String resources = tableRow.child(4).text();
+                    String resources = tableRow.child(4).text();
 
-                assignments.add(new AssignmentAll(assignmentId, due, clazz, assignment.text(), notes, resources));
+                    assignments.add(new AssignmentAll(assignmentId, due, clazz, assignment.text(), notes, resources));
+                }
             }
 
             return assignments;
