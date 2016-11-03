@@ -27,7 +27,9 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -669,6 +671,54 @@ public class SFS {
 
             return new Announcement(from, to, date, subject, description);
         });
+    }
+
+    public CompletableFuture<String> fetchReportCard(String cookie) {
+        HttpGet get = new HttpGet(BASE_URL + "parents/PRViewAll.aspx");
+
+        ApacheCompletableFuture<HttpResponse> future = new ApacheCompletableFuture<>();
+
+        client.execute(get, generateCookieContext(cookie), future);
+
+        return future.thenApply(this::fetchDocument).thenCompose(document -> {
+            Elements tableDatas = document.getElementsByTag("td");
+
+            for (Element tableData : tableDatas) {
+                if (tableData.text().equals("view")) {
+                    ApacheCompletableFuture<HttpResponse> secondFuture = new ApacheCompletableFuture<>();
+
+                    String url = tableData.select("td > a").attr("href");
+
+                    url = url.replace("../", BASE_URL);
+
+                    client.execute(new HttpGet(url), generateCookieContext(cookie), secondFuture);
+
+                    return secondFuture;
+                }
+            }
+
+            return null;
+        }).thenApply(response -> {
+            try {
+                return fromInputStream(response.getEntity().getContent());
+            } catch (IOException e) {
+                return "error!";
+            }
+        });
+    }
+
+    private String fromInputStream(InputStream stream) throws IOException {
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+
+        byte[] buffer = new byte[1024];
+
+        int length;
+
+        while ((length = stream.read(buffer)) != -1) {
+            result.write(buffer, 0, length);
+        }
+
+        return result.toString("windows-1252");
     }
 
     public void close() {

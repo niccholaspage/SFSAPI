@@ -198,6 +198,20 @@ public class WebHandler {
             });
         });
 
+        router.post("/reportcard").handler(ctx -> {
+            if (!processContext(ctx)) {
+                return;
+            }
+
+            ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/pdf");
+
+            JsonObject json = ctx.getBodyAsJson();
+
+            api.fetchReportCard(json.getString("cookie")).thenAccept(html -> {
+                ctx.response().end(html);
+            });
+        });
+
         vertx.createHttpServer().requestHandler(router::accept).listen(5000);
 
         System.out.println("Website started!");
