@@ -1,4 +1,4 @@
-package com.nicholasnassar.sfsapi.data.links;
+package com.nicholasnassar.sfsapi.data.grades;
 
 public enum LetterGrade {
     F("F"),
