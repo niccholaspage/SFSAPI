@@ -515,6 +515,46 @@ public class SFS {
         });
     }
 
+    public CompletableFuture<AssignmentsWeek> fetchAssignmentsInMonth(String cookie) {
+        HttpGet get = new HttpGet(BASE_URL + "parents/AssignmentViewAll_Calendar.aspx?&showrecentassignments=true&datemode=1");
+
+        ApacheCompletableFuture<HttpResponse> future = new ApacheCompletableFuture<>();
+
+        client.execute(get, generateCookieContext(cookie), future);
+
+        return future.thenApply(this::fetchDocument).thenApply(document -> {
+            Element tableBody = document.select("table#tblMain.calendar.ViewAllTableGrid > tbody").first();
+
+            List<AssignmentDay> days = new ArrayList<>();
+
+            for (Element tableRow : tableBody.children()) {
+                for (Element tableData : tableRow.children()) {
+                    if (tableData.hasClass("inactiveday")) {
+                        continue;
+                    }
+
+                    String date = tableData.select("span.datelabel").text();
+
+                    Elements assignmentsInDay = tableData.select("div.assignment");
+
+                    List<AssignmentNameAndLink> assignments = new ArrayList<>();
+
+                    for (Element assignment : assignmentsInDay) {
+                        String assignmentId = assignment.id().substring(1);
+
+                        String assignmentName = assignment.text();
+
+                        assignments.add(new AssignmentNameAndLink(assignmentName, new AssignmentLink(assignmentId)));
+                    }
+
+                    days.add(new AssignmentDay(date, assignments));
+                }
+            }
+
+            return new AssignmentsWeek(days);
+        });
+    }
+
     public CompletableFuture<AssignmentsWeek> fetchAssignmentsInWeek(String cookie) {
         HttpGet get = new HttpGet(BASE_URL + "parents/AssignmentViewAll_Calendar.aspx?&showrecentassignments=true&datemode=2");
 

@@ -133,6 +133,10 @@ public class WebHandler {
                 api.fetchAssignmentsInWeek(json.getString("cookie")).thenAccept(assignmentsWeek -> {
                     ctx.response().end(assignmentsWeek.asJsonArray().encode());
                 });
+            } else if (mode.equals("month")) {
+                api.fetchAssignmentsInMonth(json.getString("cookie")).thenAccept(assignmentsMonth -> {
+                    ctx.response().end(new JsonObject().put("month", assignmentsMonth.asJsonArray()).encode());
+                });
             } else if (mode.equals("all")) {
                 String clazz;
 
