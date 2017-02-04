@@ -47,9 +47,9 @@ public class SFS {
 
     private static final String CURRENT_YEAR = "2016-17";
 
-    private static final String CURRENT_TERM = "Q2";
+    private static final String CURRENT_TERM = "Q3";
 
-    private static final String[] PAST_TERMS = {"Q1", "Q2"};
+    private static final String[] PAST_TERMS = {"Q1", "Q2", "Q3"};
 
     private final DecimalFormat gpaTruncate;
 
@@ -118,6 +118,10 @@ public class SFS {
 
         return future.handle((httpResponse, throwable) -> {
             if (throwable != null) {
+                System.out.println("Couldn't log someone in:");
+
+                throwable.printStackTrace();
+
                 return new LoginResult(null, "Couldn't log you in with those details.");
             } else {
                 return this.fetchDocument(httpResponse);
@@ -150,7 +154,7 @@ public class SFS {
     }
 
     public CompletableFuture<List<NewsFeedItem>> fetchNewsFeed(String cookie) {
-        HttpGet get = new HttpGet(BASE_URL + "parents/main_classic.aspx?");
+        HttpGet get = new HttpGet(BASE_URL + "parents/main.aspx?");
 
         ApacheCompletableFuture<HttpResponse> future = new ApacheCompletableFuture<>();
 
@@ -159,36 +163,43 @@ public class SFS {
         return future.thenApply(this::fetchDocument).thenApply(document -> {
             List<NewsFeedItem> items = new ArrayList<>();
 
-            Element element = document.select("div#NewsFeedContentContainer").first();
+            try {
+                Element element = document.select("div.feed-background").first();
 
-            for (Element div : element.getElementsByTag("div")) {
-                if (div.id().startsWith("NewsFeedItem_")) {
-                    Element item = div.select("div").first();
+                for (Element div : element.getElementsByTag("div")) {
+                    if (div.id().startsWith("NewsFeedItem_")) {
+                        Element item = div.select("div").first();
 
-                    Element headerLink = item.select("div.newsfeedheader > div.newsfeedheadertext > a").first();
+                        //Element headerLink = item.select("div.newsfeedheader > div.newsfeedheadertext > a").first();
+                        Element linkAndTime = div.select("div.text-right").first();
 
-                    Elements contentLinks = item.select("div.newsfeedcontent > a");
+                        Element headerLink = linkAndTime.select("a").first();
 
-                    Link link = null;
+                        Elements contentLinks = item.select("div.col-xs-6 > a");
 
-                    if (contentLinks.isEmpty()) {
-                        String linkHref = handleLinkHref(headerLink);
+                        Link link;
 
-                        link = LinkType.generateLink(linkHref);
-                    } else {
-                        String linkHref = handleLinkHref(contentLinks.first());
+                        if (contentLinks.isEmpty()) {
+                            String linkHref = handleLinkHref(headerLink);
 
-                        link = LinkType.generateLink(linkHref);
+                            link = LinkType.generateLink(linkHref);
+                        } else {
+                            String linkHref = handleLinkHref(contentLinks.first());
+
+                            link = LinkType.generateLink(linkHref);
+                        }
+
+                        String className = headerLink.text();
+
+                        String time = linkAndTime.ownText().replace("'' ", "");
+
+                        String details = item.select("div.col-xs-6").first().text();
+
+                        items.add(new NewsFeedItem(className, time, details, link));
                     }
-
-                    String className = headerLink.text();
-
-                    String time = item.select("div.newsfeedheader > div[style='float:right;'] > div").first().text();
-
-                    String details = item.select("div.newsfeedcontent").first().text();
-
-                    items.add(new NewsFeedItem(className, time, details, link));
                 }
+            } catch (Exception e) {
+                handleExceptionWithDocument(document, e);
             }
 
             return items;
@@ -233,80 +244,84 @@ public class SFS {
                 return new FullGrade(new ArrayList<>());
             }
 
-            Element table = document.select("table.ViewAllTable > tbody").first();
-
             List<GradeAssignment> gradeAssignments = new ArrayList<>();
 
-            double totalPoints = 0, totalScore = 0;
+            try {
+                Element table = document.select("table.ViewAllTable > tbody").first();
 
-            for (int i = 1; i < table.children().size(); i++) {
-                Element row = table.child(i);
+                double totalPoints = 0, totalScore = 0;
 
-                Element assignmentElement;
+                for (int i = 1; i < table.children().size(); i++) {
+                    Element row = table.child(i);
 
-                String dateDue, category, assignment, possiblePoints, score, percentage, letterGrade, comments;
+                    Element assignmentElement;
 
-                if (row.children().size() == 8) {
-                    dateDue = trim(row.child(0).text());
-                    category = trim(row.child(1).text());
-                    assignmentElement = row.child(2);
-                    assignment = trim(assignmentElement.text());
-                    possiblePoints = trim(row.child(3).text());
-                    score = trim(row.child(4).text());
-                    percentage = trim(row.child(5).text());
-                    letterGrade = trim(row.child(6).text());
-                    comments = trim(row.child(7).text());
-                } else {
-                    dateDue = trim(row.child(0).text());
-                    category = null;
-                    assignmentElement = row.child(1);
-                    assignment = trim(assignmentElement.text());
-                    possiblePoints = trim(row.child(2).text());
-                    score = trim(row.child(3).text());
-                    percentage = trim(row.child(4).text());
-                    letterGrade = trim(row.child(5).text());
-                    comments = trim(row.child(6).text());
+                    String dateDue, category, assignment, possiblePoints, score, percentage, letterGrade, comments;
 
-                    if (assignment != null && assignment.equals("Total")) {
-                        possiblePoints = totalPoints + "";
-
-                        score = totalScore + "";
+                    if (row.children().size() == 8) {
+                        dateDue = trim(row.child(0).text());
+                        category = trim(row.child(1).text());
+                        assignmentElement = row.child(2);
+                        assignment = trim(assignmentElement.text());
+                        possiblePoints = trim(row.child(3).text());
+                        score = trim(row.child(4).text());
+                        percentage = trim(row.child(5).text());
+                        letterGrade = trim(row.child(6).text());
+                        comments = trim(row.child(7).text());
                     } else {
-                        try {
-                            double assignmentPoints = Double.parseDouble(possiblePoints);
-                            double assignmentScore = Double.parseDouble(score);
+                        dateDue = trim(row.child(0).text());
+                        category = null;
+                        assignmentElement = row.child(1);
+                        assignment = trim(assignmentElement.text());
+                        possiblePoints = trim(row.child(2).text());
+                        score = trim(row.child(3).text());
+                        percentage = trim(row.child(4).text());
+                        letterGrade = trim(row.child(5).text());
+                        comments = trim(row.child(6).text());
 
-                            totalPoints += assignmentPoints;
-                            totalScore += assignmentScore;
-                        } catch (Exception e) {
-                            //Parse errors mean that this assignment shouldn't be counted
+                        if (assignment != null && assignment.equals("Total")) {
+                            possiblePoints = totalPoints + "";
+
+                            score = totalScore + "";
+                        } else {
+                            try {
+                                double assignmentPoints = Double.parseDouble(possiblePoints);
+                                double assignmentScore = Double.parseDouble(score);
+
+                                totalPoints += assignmentPoints;
+                                totalScore += assignmentScore;
+                            } catch (Exception e) {
+                                //Parse errors mean that this assignment shouldn't be counted
+                            }
                         }
                     }
+
+                    String assignmentId = null;
+
+                    try {
+                        assignmentId = assignmentElement.select("a").attr("href")
+                                .replace("../parents/AssignmentView.aspx?TestNameID=", "");
+
+                        assignmentId = assignmentId.substring(0, assignmentId.indexOf("&"));
+                    } catch (Exception e) {
+
+                    }
+
+                    Link link;
+
+                    if (assignmentId.isEmpty()) {
+                        link = null;
+                    } else {
+                        link = new AssignmentLink(assignmentId);
+                    }
+
+                    GradeAssignment gradeAssignment = new GradeAssignment(link, dateDue, category, assignment,
+                            possiblePoints, score, percentage, letterGrade, comments);
+
+                    gradeAssignments.add(gradeAssignment);
                 }
-
-                String assignmentId = null;
-
-                try {
-                    assignmentId = assignmentElement.select("a").attr("href")
-                            .replace("../parents/AssignmentView.aspx?TestNameID=", "");
-
-                    assignmentId = assignmentId.substring(0, assignmentId.indexOf("&"));
-                } catch (Exception e) {
-
-                }
-
-                Link link;
-
-                if (assignmentId.isEmpty()) {
-                    link = null;
-                } else {
-                    link = new AssignmentLink(assignmentId);
-                }
-
-                GradeAssignment gradeAssignment = new GradeAssignment(link, dateDue, category, assignment,
-                        possiblePoints, score, percentage, letterGrade, comments);
-
-                gradeAssignments.add(gradeAssignment);
+            } catch (Exception e) {
+                handleExceptionWithDocument(document, e);
             }
 
             return new FullGrade(gradeAssignments);
@@ -330,47 +345,51 @@ public class SFS {
         return future.thenApply(this::fetchDocument).thenApply(document -> {
             List<Grade> grades = new ArrayList<>();
 
-            Elements tables = document.select("table.ViewAllTable > tbody");
-
-            List<Element> tableRows = tables.get(0).children();
-
-            for (int i = 1; i < tableRows.size(); i++) {
-                Element element = tableRows.get(i);
-
-                Element currentScore = element.child(3);
-
-                String id = currentScore.select("a").attr("href");
-
-                GradeLink link = (GradeLink) LinkType.generateLink(id);
-
-                String term = element.child(0).text();
-
-                term = trim(term.replace(CURRENT_YEAR, "").trim());
-
-                grades.add(new Grade(link, term, trim(element.child(1).text()), trim(element.child(2).text()),
-                        trim(currentScore.text())));
-            }
-
             List<MissingAssignment> missingWork = new ArrayList<>();
 
-            if (tables.size() > 1) {
-                Element missingWorkTable = tables.get(1);
+            try {
+                Elements tables = document.select("table.ViewAllTable > tbody");
 
-                for (Element tableRow : missingWorkTable.children()) {
-                    if (tableRow.child(0).text().equals("This student has no missing work.")) {
-                        break;
-                    }
+                List<Element> tableRows = tables.get(0).children();
 
-                    String dateDue = trim(tableRow.child(0).text());
-                    String className = trim(tableRow.child(1).text());
-                    String assignmentName = trim(tableRow.child(2).text());
-                    Link link = LinkType.generateLink(tableRow.child(2).select("a").attr("href"));
-                    String possiblePoints = trim(tableRow.child(3).text());
-                    String score = trim(tableRow.child(4).text());
-                    String comments = trim(tableRow.child(5).text());
-                    missingWork.add(new MissingAssignment(link, dateDue, className, assignmentName,
-                            possiblePoints, score, comments));
+                for (int i = 1; i < tableRows.size(); i++) {
+                    Element element = tableRows.get(i);
+
+                    Element currentScore = element.child(3);
+
+                    String id = currentScore.select("a").attr("href");
+
+                    GradeLink link = (GradeLink) LinkType.generateLink(id);
+
+                    String term = element.child(0).text();
+
+                    term = trim(term.replace(CURRENT_YEAR, "").trim());
+
+                    grades.add(new Grade(link, term, trim(element.child(1).text()), trim(element.child(2).text()),
+                            trim(currentScore.text())));
                 }
+
+                if (tables.size() > 1) {
+                    Element missingWorkTable = tables.get(1);
+
+                    for (Element tableRow : missingWorkTable.children()) {
+                        if (tableRow.child(0).text().equals("This student has no missing work.")) {
+                            break;
+                        }
+
+                        String dateDue = trim(tableRow.child(0).text());
+                        String className = trim(tableRow.child(1).text());
+                        String assignmentName = trim(tableRow.child(2).text());
+                        Link link = LinkType.generateLink(tableRow.child(2).select("a").attr("href"));
+                        String possiblePoints = trim(tableRow.child(3).text());
+                        String score = trim(tableRow.child(4).text());
+                        String comments = trim(tableRow.child(5).text());
+                        missingWork.add(new MissingAssignment(link, dateDue, className, assignmentName,
+                                possiblePoints, score, comments));
+                    }
+                }
+            } catch (Exception e) {
+                handleExceptionWithDocument(document, e);
             }
 
             /* Test missing work assignments
@@ -387,63 +406,69 @@ public class SFS {
         return fetchGrades(cookie, true).thenApply(grades -> {
             List<Grade> allGrades = grades.getGrades();
 
-            double classesCount = 0;
-
-            double gpa = 0;
-
-            double maxGPA = 0;
-
-            String calculateTerm = term == null ? CURRENT_TERM : term;
-
             List<GPAClass> classes = new ArrayList<>();
 
-            for (Grade grade : allGrades) {
-                String score = grade.getScore();
+            try {
+                double classesCount = 0;
 
-                if (score.equals("Details") || score.equals("P") || !grade.getTerm().equals(calculateTerm)) {
-                    continue;
+                double gpa = 0;
+
+                double maxGPA = 0;
+
+                String calculateTerm = term == null ? CURRENT_TERM : term;
+
+                for (Grade grade : allGrades) {
+                    String score = grade.getScore();
+
+                    if (score.equals("Details") || score.equals("P") || !grade.getTerm().equals(calculateTerm)) {
+                        continue;
+                    }
+
+                    boolean halfCredit = grade.getClazz().startsWith("PE ") || grade.getClazz().endsWith(" Flex");
+
+                    if (halfCredit) {
+                        classesCount += 0.5;
+                    } else {
+                        classesCount++;
+                    }
+
+                    String letterGradeFromScore = score.substring(score.indexOf(" = ") + 3);
+
+                    LetterGrade letterGrade = LetterGrade.getLetterGrade(letterGradeFromScore);
+
+                    GradeScale scale = GradeScale.getScale(grade.getClazz());
+
+                    double classScore = scale.getScore(letterGrade);
+
+                    if (halfCredit) {
+                        classScore /= 2;
+                    }
+
+                    gpa += classScore;
+
+                    maxGPA += halfCredit ? scale.getScore(LetterGrade.A_PLUS) / 2 : scale.getScore(LetterGrade.A_PLUS);
+
+                    classes.add(new GPAClass(grade.getClazz(), letterGrade.getName(), classScore + ""));
                 }
 
-                boolean halfCredit = grade.getClazz().startsWith("PE ") || grade.getClazz().endsWith(" Flex");
-
-                if (halfCredit) {
-                    classesCount += 0.5;
-                } else {
-                    classesCount++;
+                if (classesCount == 0) {
+                    return new GPACalculation(Arrays.asList(new GPAClass("No classes yet", "", "")), PAST_TERMS);
                 }
 
-                String letterGradeFromScore = score.substring(score.indexOf(" = ") + 3);
+                gpa /= classesCount;
 
-                LetterGrade letterGrade = LetterGrade.getLetterGrade(letterGradeFromScore);
+                maxGPA /= classesCount;
 
-                GradeScale scale = GradeScale.getScale(grade.getClazz());
+                gpa = Double.parseDouble(gpaTruncate.format(gpa));
 
-                double classScore = scale.getScore(letterGrade);
+                maxGPA = Double.parseDouble(gpaTruncate.format(maxGPA));
 
-                if (halfCredit) {
-                    classScore /= 2;
-                }
+                classes.add(new GPAClass("Total", "Your GPA: " + gpa, "Max: " + maxGPA));
+            } catch (Exception e) {
+                System.out.println("Error calculating GPA!");
 
-                gpa += classScore;
-
-                maxGPA += halfCredit ? scale.getScore(LetterGrade.A_PLUS) / 2 : scale.getScore(LetterGrade.A_PLUS);
-
-                classes.add(new GPAClass(grade.getClazz(), letterGrade.getName(), classScore + ""));
+                e.printStackTrace();
             }
-
-            if (classesCount == 0) {
-                return new GPACalculation(Arrays.asList(new GPAClass("No classes yet", "", "")), PAST_TERMS);
-            }
-
-            gpa /= classesCount;
-
-            maxGPA /= classesCount;
-
-            gpa = Double.parseDouble(gpaTruncate.format(gpa));
-
-            maxGPA = Double.parseDouble(gpaTruncate.format(maxGPA));
-
-            classes.add(new GPAClass("Total", "Your GPA: " + gpa, "Max: " + maxGPA));
 
             return new GPACalculation(classes, PAST_TERMS);
         });
@@ -457,15 +482,15 @@ public class SFS {
         client.execute(get, generateCookieContext(cookie), future);
 
         return future.thenApply(this::fetchDocument).thenApply(document -> {
-            List<AssignmentTaskList> assignments = new ArrayList<>();
-
-            Element tableBody = document.select("table#tblMain > tbody").first();
-
-            String previousName = null;
-
-            int classSpan = 0;
-
             try {
+                List<AssignmentTaskList> assignments = new ArrayList<>();
+
+                Element tableBody = document.select("table#tblMain > tbody").first();
+
+                String previousName = null;
+
+                int classSpan = 0;
+
                 for (Element element : tableBody.children()) {
                     String name;
 
@@ -507,12 +532,20 @@ public class SFS {
 
                     assignments.add(new AssignmentTaskList(id, name, activity.text(), "Due " + dateDue.text(), resources));
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
 
-            return assignments;
+                return assignments;
+            } catch (Exception e) {
+                handleExceptionWithDocument(document, e);
+
+                return new ArrayList<AssignmentTaskList>();
+            }
         });
+    }
+
+    private void handleExceptionWithDocument(Document document, Exception exception) {
+        System.out.println("Exception thrown on:");
+        //System.out.println(document.html());
+        exception.printStackTrace();
     }
 
     public CompletableFuture<AssignmentsWeek> fetchAssignmentsInMonth(String cookie) {
@@ -523,32 +556,36 @@ public class SFS {
         client.execute(get, generateCookieContext(cookie), future);
 
         return future.thenApply(this::fetchDocument).thenApply(document -> {
-            Element tableBody = document.select("table#tblMain.calendar.ViewAllTableGrid > tbody").first();
-
             List<AssignmentDay> days = new ArrayList<>();
 
-            for (Element tableRow : tableBody.children()) {
-                for (Element tableData : tableRow.children()) {
-                    if (tableData.hasClass("inactiveday")) {
-                        continue;
+            try {
+                Element tableBody = document.select("table#tblMain.calendar.ViewAllTableGrid > tbody").first();
+
+                for (Element tableRow : tableBody.children()) {
+                    for (Element tableData : tableRow.children()) {
+                        if (tableData.hasClass("inactiveday")) {
+                            continue;
+                        }
+
+                        String date = tableData.select("span.datelabel").text();
+
+                        Elements assignmentsInDay = tableData.select("div.assignment");
+
+                        List<AssignmentNameAndLink> assignments = new ArrayList<>();
+
+                        for (Element assignment : assignmentsInDay) {
+                            String assignmentId = assignment.id().substring(1);
+
+                            String assignmentName = assignment.text();
+
+                            assignments.add(new AssignmentNameAndLink(assignmentName, new AssignmentLink(assignmentId)));
+                        }
+
+                        days.add(new AssignmentDay(date, assignments));
                     }
-
-                    String date = tableData.select("span.datelabel").text();
-
-                    Elements assignmentsInDay = tableData.select("div.assignment");
-
-                    List<AssignmentNameAndLink> assignments = new ArrayList<>();
-
-                    for (Element assignment : assignmentsInDay) {
-                        String assignmentId = assignment.id().substring(1);
-
-                        String assignmentName = assignment.text();
-
-                        assignments.add(new AssignmentNameAndLink(assignmentName, new AssignmentLink(assignmentId)));
-                    }
-
-                    days.add(new AssignmentDay(date, assignments));
                 }
+            } catch (Exception e) {
+                handleExceptionWithDocument(document, e);
             }
 
             return new AssignmentsWeek(days);
@@ -563,24 +600,28 @@ public class SFS {
         client.execute(get, generateCookieContext(cookie), future);
 
         return future.thenApply(this::fetchDocument).thenApply(document -> {
-            Element tableBody = document.select("table#tblMain > tbody").first();
-
             List<AssignmentDay> days = new ArrayList<>();
 
-            for (Element tableRow : tableBody.children()) {
-                String date = tableRow.child(0).text();
+            try {
+                Element tableBody = document.select("table#tblMain > tbody").first();
 
-                List<AssignmentNameAndLink> assignments = new ArrayList<>();
+                for (Element tableRow : tableBody.children()) {
+                    String date = tableRow.child(0).text();
 
-                for (Element assignment : tableRow.select("div.assignment")) {
-                    String assignmentId = assignment.id().substring(1);
+                    List<AssignmentNameAndLink> assignments = new ArrayList<>();
 
-                    String assignmentName = assignment.text();
+                    for (Element assignment : tableRow.select("div.assignment")) {
+                        String assignmentId = assignment.id().substring(1);
 
-                    assignments.add(new AssignmentNameAndLink(assignmentName, new AssignmentLink(assignmentId)));
+                        String assignmentName = assignment.text();
+
+                        assignments.add(new AssignmentNameAndLink(assignmentName, new AssignmentLink(assignmentId)));
+                    }
+
+                    days.add(new AssignmentDay(date, assignments));
                 }
-
-                days.add(new AssignmentDay(date, assignments));
+            } catch (Exception e) {
+                handleExceptionWithDocument(document, e);
             }
 
             return new AssignmentsWeek(days);
@@ -596,32 +637,36 @@ public class SFS {
         client.execute(get, generateCookieContext(cookie), future);
 
         return future.thenApply(this::fetchDocument).thenApply(document -> {
-            Element tableBody = document.select("table#tblMain > tbody").first();
-
             List<AssignmentAll> assignments = new ArrayList<>();
 
-            for (Element tableRow : tableBody.children()) {
-                if (tableRow.children().size() == 1) {
-                    //Totals - TODO?
-                    continue;
+            try {
+                Element tableBody = document.select("table#tblMain > tbody").first();
+
+                for (Element tableRow : tableBody.children()) {
+                    if (tableRow.children().size() == 1) {
+                        //Totals - TODO?
+                        continue;
+                    }
+
+                    String due = tableRow.child(0).text();
+
+                    String clazz = tableRow.child(1).text();
+
+                    if (filteredClass == null || filteredClass.equals(clazz)) {
+                        Element assignment = tableRow.child(2);
+
+                        String assignmentId = assignment.child(0).attr("href")
+                                .replace("../parents/AssignmentView.aspx?TestNameID=", "");
+
+                        String notes = tableRow.child(3).text();
+
+                        String resources = tableRow.child(4).text();
+
+                        assignments.add(new AssignmentAll(assignmentId, due, clazz, assignment.text(), notes, resources));
+                    }
                 }
-
-                String due = tableRow.child(0).text();
-
-                String clazz = tableRow.child(1).text();
-
-                if (filteredClass == null || filteredClass.equals(clazz)) {
-                    Element assignment = tableRow.child(2);
-
-                    String assignmentId = assignment.child(0).attr("href")
-                            .replace("../parents/AssignmentView.aspx?TestNameID=", "");
-
-                    String notes = tableRow.child(3).text();
-
-                    String resources = tableRow.child(4).text();
-
-                    assignments.add(new AssignmentAll(assignmentId, due, clazz, assignment.text(), notes, resources));
-                }
+            } catch (Exception e) {
+                handleExceptionWithDocument(document, e);
             }
 
             return assignments;
@@ -636,52 +681,58 @@ public class SFS {
         client.execute(get, generateCookieContext(cookie), future);
 
         return future.thenApply(this::fetchDocument).thenApply(document -> {
-            String activity = document.select("h2#titleHeader").text().replace("Assignment: ", "");
+            try {
+                String activity = document.select("h2#titleHeader").text().replace("Assignment: ", "");
 
-            String clazz = null, instructor = null, assigned = null, due = null, possiblePoints = null;
+                String clazz = null, instructor = null, assigned = null, due = null, possiblePoints = null;
 
-            String category = null, notes = null;
+                String category = null, notes = null;
 
-            List<Resource> resources = new ArrayList<>();
+                List<Resource> resources = new ArrayList<>();
 
-            for (Element resourceElement : document.select("table#ResourceTbl > tbody > tr")) {
-                Element link = resourceElement.getElementsByTag("a").first();
+                for (Element resourceElement : document.select("table#ResourceTbl > tbody > tr")) {
+                    Element link = resourceElement.getElementsByTag("a").first();
 
-                resources.add(new Resource(link.text(), link.attr("href")));
-            }
-
-            for (Element tableRow : document.select("table#DetailsTbl > tbody > tr")) {
-                int childrenSize = tableRow.children().size();
-
-                if (childrenSize != 2) {
-                    continue;
+                    resources.add(new Resource(link.text(), link.attr("href")));
                 }
 
-                String key = tableRow.child(0).text();
+                for (Element tableRow : document.select("table#DetailsTbl > tbody > tr")) {
+                    int childrenSize = tableRow.children().size();
 
-                key = key.substring(0, key.length() - 1);
+                    if (childrenSize != 2) {
+                        continue;
+                    }
 
-                String value = tableRow.child(1).text();
+                    String key = tableRow.child(0).text();
 
-                if (key.equalsIgnoreCase("class")) {
-                    clazz = value;
-                } else if (key.equalsIgnoreCase("instructor")) {
-                    instructor = value;
-                } else if (key.equalsIgnoreCase("assigned")) {
-                    assigned = value;
-                } else if (key.equalsIgnoreCase("due")) {
-                    due = value;
-                } else if (key.equalsIgnoreCase("possible points")) {
-                    possiblePoints = value;
-                } else if (key.equalsIgnoreCase("category")) {
-                    category = value;
-                } else if (key.equalsIgnoreCase("notes")) {
-                    notes = value;
+                    key = key.substring(0, key.length() - 1);
+
+                    String value = tableRow.child(1).text();
+
+                    if (key.equalsIgnoreCase("class")) {
+                        clazz = value;
+                    } else if (key.equalsIgnoreCase("instructor")) {
+                        instructor = value;
+                    } else if (key.equalsIgnoreCase("assigned")) {
+                        assigned = value;
+                    } else if (key.equalsIgnoreCase("due")) {
+                        due = value;
+                    } else if (key.equalsIgnoreCase("possible points")) {
+                        possiblePoints = value;
+                    } else if (key.equalsIgnoreCase("category")) {
+                        category = value;
+                    } else if (key.equalsIgnoreCase("notes")) {
+                        notes = value;
+                    }
                 }
-            }
 
-            return new FullAssignment(activity, clazz, instructor, assigned, due, possiblePoints, category, notes,
-                    resources);
+                return new FullAssignment(activity, clazz, instructor, assigned, due, possiblePoints, category, notes,
+                        resources);
+            } catch (Exception e) {
+                handleExceptionWithDocument(document, e);
+
+                return new FullAssignment(null, null, null, null, null, null, null, null, new ArrayList<>());
+            }
         });
     }
 
