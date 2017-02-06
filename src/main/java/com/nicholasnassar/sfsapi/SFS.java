@@ -475,7 +475,7 @@ public class SFS {
     }
 
     public CompletableFuture<List<AssignmentTaskList>> fetchAssignmentsInTaskList(String cookie) {
-        HttpGet get = new HttpGet(BASE_URL + "parents/AssignmentViewAll_Calendar.aspx?showrecentassignments=true&datemode=3");
+        HttpGet get = new HttpGet(BASE_URL + "parents/AssignmentViewAll.aspx?&datemode=3");
 
         ApacheCompletableFuture<HttpResponse> future = new ApacheCompletableFuture<>();
 
@@ -485,52 +485,22 @@ public class SFS {
             try {
                 List<AssignmentTaskList> assignments = new ArrayList<>();
 
-                Element tableBody = document.select("table#tblMain > tbody").first();
+                Element mainContainer = document.select("div#mainContainer").first();
 
-                String previousName = null;
+                for (Element element : mainContainer.select("div.curricula-item")) {
+                    Element activity = element.getElementsByTag("h4").first().select("a").first();
 
-                int classSpan = 0;
+                    Element due = element.select("div.due").first();
 
-                for (Element element : tableBody.children()) {
-                    String name;
+                    String name = due.text().substring(0, due.text().indexOf(" Due: "));
 
-                    Element activity, dateDue;
+                    String dueDate = due.text().substring(due.text().indexOf(" Due: ") + 6);
 
-                    int resources;
+                    int resources = element.select("i.cmg.small.resources").size();
 
-                    if (classSpan != 0) {
-                        name = previousName;
+                    String id = activity.attr("href").replace("AssignmentView.aspx?TestNameID=", "");
 
-                        activity = element.child(0);
-
-                        dateDue = element.child(1);
-
-                        resources = element.child(2).select("table > tbody > tr").size();
-
-                        classSpan--;
-                    } else {
-                        Element classElement = element.child(0);
-
-                        String rowSpan = classElement.attr("rowspan");
-
-                        if (rowSpan != null && !rowSpan.isEmpty()) {
-                            classSpan = Integer.parseInt(rowSpan) - 1;
-
-                            previousName = classElement.text();
-                        }
-
-                        name = classElement.text();
-
-                        activity = element.child(1);
-
-                        dateDue = element.child(2);
-
-                        resources = element.child(3).select("table > tbody > tr").size();
-                    }
-
-                    String id = activity.select("a").attr("href").replace("../parents/AssignmentView.aspx?TestNameID=", "");
-
-                    assignments.add(new AssignmentTaskList(id, name, activity.text(), "Due " + dateDue.text(), resources));
+                    assignments.add(new AssignmentTaskList(id, name, activity.text(), "Due " + dueDate, resources));
                 }
 
                 return assignments;
@@ -544,7 +514,7 @@ public class SFS {
 
     private void handleExceptionWithDocument(Document document, Exception exception) {
         System.out.println("Exception thrown on:");
-        //System.out.println(document.html());
+        System.out.println(document.html());
         exception.printStackTrace();
     }
 
