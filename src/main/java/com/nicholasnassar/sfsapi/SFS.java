@@ -685,7 +685,7 @@ public class SFS {
                         instructor = value;
                     } else if (key.equalsIgnoreCase("assigned")) {
                         assigned = value;
-                    } else if (key.equalsIgnoreCase("due")) {
+                    } else if (key.equalsIgnoreCase("date due")) {
                         due = value;
                     } else if (key.equalsIgnoreCase("possible points")) {
                         possiblePoints = value;
