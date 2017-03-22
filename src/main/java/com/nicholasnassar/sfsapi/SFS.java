@@ -47,9 +47,9 @@ public class SFS {
 
     private static final String CURRENT_YEAR = "2016-17";
 
-    private static final String CURRENT_TERM = "Q3";
+    private static final String CURRENT_TERM = "Q4";
 
-    private static final String[] PAST_TERMS = {"Q1", "Q2", "Q3"};
+    private static final String[] PAST_TERMS = {"Q1", "Q2", "Q3", "Q4"};
 
     private final DecimalFormat gpaTruncate;
 
