@@ -88,7 +88,6 @@ public class SFS {
         localContext.setAttribute(HttpClientContext.COOKIE_STORE, tempStore);
 
         return localContext;
-
     }
 
     public CompletableFuture<LoginResult> login(String email, String password) {
