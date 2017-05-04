@@ -174,7 +174,7 @@ public class SFS {
 
                         Element headerLink = linkAndTime.select("a").first();
 
-                        Elements contentLinks = item.select("div.col-xs-6 > a");
+                        Elements contentLinks = item.select("div.col-xs-9 > a");
 
                         Link link;
 
@@ -192,7 +192,7 @@ public class SFS {
 
                         String time = linkAndTime.ownText().replace("'' ", "");
 
-                        String details = item.select("div.col-xs-6").first().text();
+                        String details = item.select("div.col-xs-9").first().text();
 
                         items.add(new NewsFeedItem(className, time, details, link));
                     }
@@ -651,11 +651,7 @@ public class SFS {
 
         return future.thenApply(this::fetchDocument).thenApply(document -> {
             try {
-                String activity = document.select("h2#titleHeader").text().replace("Assignment: ", "");
-
-                String clazz = null, instructor = null, assigned = null, due = null, possiblePoints = null;
-
-                String category = null, notes = null;
+                String activity = document.select("span.pull-left").text().replace("Assignment: ", "");
 
                 List<Resource> resources = new ArrayList<>();
 
@@ -665,35 +661,19 @@ public class SFS {
                     resources.add(new Resource(link.text(), link.attr("href")));
                 }
 
-                for (Element tableRow : document.select("table#DetailsTbl > tbody > tr")) {
-                    int childrenSize = tableRow.children().size();
+                String clazz = getTextFromId(document, "ClassName");
 
-                    if (childrenSize != 2) {
-                        continue;
-                    }
+                String instructor = getTextFromId(document, "InstructorName");
 
-                    String key = tableRow.child(0).text();
+                String assigned = getTextFromId(document, "DateAssigned");
 
-                    key = key.substring(0, key.length() - 1);
+                String due = getTextFromId(document, "DateDue");
 
-                    String value = tableRow.child(1).text();
+                String possiblePoints = getTextFromId(document, "PossiblePoints");
 
-                    if (key.equalsIgnoreCase("class")) {
-                        clazz = value;
-                    } else if (key.equalsIgnoreCase("instructor")) {
-                        instructor = value;
-                    } else if (key.equalsIgnoreCase("assigned")) {
-                        assigned = value;
-                    } else if (key.equalsIgnoreCase("date due")) {
-                        due = value;
-                    } else if (key.equalsIgnoreCase("possible points")) {
-                        possiblePoints = value;
-                    } else if (key.equalsIgnoreCase("category")) {
-                        category = value;
-                    } else if (key.equalsIgnoreCase("notes")) {
-                        notes = value;
-                    }
-                }
+                String category = getTextFromId(document, "Category");
+
+                String notes = getTextFromId(document, "AssignmentNotes");
 
                 return new FullAssignment(activity, clazz, instructor, assigned, due, possiblePoints, category, notes,
                         resources);
@@ -703,6 +683,16 @@ public class SFS {
                 return new FullAssignment(null, null, null, null, null, null, null, null, new ArrayList<>());
             }
         });
+    }
+
+    private String getTextFromId(Document document, String id) {
+        Elements elements = document.getElementsByAttributeValue("id", id);
+
+        if (elements.isEmpty()) {
+            return null;
+        } else {
+            return elements.text();
+        }
     }
 
     public CompletableFuture<Announcement> fetchAnnouncement(String cookie, String id) {
