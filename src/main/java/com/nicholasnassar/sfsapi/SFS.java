@@ -174,6 +174,8 @@ public class SFS {
 
                         Element className = linkAndTime.select("span.title").first();
 
+                        Element time = linkAndTime.select("span.time-ago").first();
+
                         Elements contentLinks = item.select("div.col-xs-9 > a");
 
                         Link link = null;
@@ -184,11 +186,9 @@ public class SFS {
                             link = LinkType.generateLink(linkHref);
                         }
 
-                        String time = linkAndTime.ownText().replace("'' ", "");
-
                         String details = item.select("div.col-xs-9").first().text();
 
-                        items.add(new NewsFeedItem(className.text(), time, details, link));
+                        items.add(new NewsFeedItem(className.text(), time.text(), details, link));
                     }
                 }
             } catch (Exception e) {
@@ -697,21 +697,17 @@ public class SFS {
         client.execute(get, generateCookieContext(cookie), future);
 
         return future.thenApply(this::fetchDocument).thenApply(document -> {
-            Element tableBody = document.select("table.ViewAllTable > tbody").first();
+            String from = document.select("div#AnnouncementFrom").first().text();
 
-            Elements rows = tableBody.select("tr");
-
-            String from = rows.first().select("td").last().text();
-
-            String to = rows.get(1).select("td").last().html();
+            String to = document.select("div#AnnouncementTo").first().text();
 
             to = to.replace("<br>", ", ");
 
-            String date = rows.get(2).select("td").last().text();
+            String date = document.select("div#AnnouncementDate").first().text();
 
-            String subject = rows.get(3).select("td").last().text();
+            String subject = document.select("div#AnnouncementSubject").first().text();
 
-            String description = rows.last().select("td").first().html();
+            String description = document.select("div#AnnouncementBody").first().html();
 
             return new Announcement(from, to, date, subject, description);
         });
