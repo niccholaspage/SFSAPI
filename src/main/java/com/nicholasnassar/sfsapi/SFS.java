@@ -172,29 +172,23 @@ public class SFS {
                         //Element headerLink = item.select("div.newsfeedheader > div.newsfeedheadertext > a").first();
                         Element linkAndTime = div.select("div.text-right").first();
 
-                        Element headerLink = linkAndTime.select("a").first();
+                        Element className = linkAndTime.select("span.title").first();
 
                         Elements contentLinks = item.select("div.col-xs-9 > a");
 
-                        Link link;
+                        Link link = null;
 
-                        if (contentLinks.isEmpty()) {
-                            String linkHref = handleLinkHref(headerLink);
-
-                            link = LinkType.generateLink(linkHref);
-                        } else {
+                        if (!contentLinks.isEmpty()) {
                             String linkHref = handleLinkHref(contentLinks.first());
 
                             link = LinkType.generateLink(linkHref);
                         }
 
-                        String className = headerLink.text();
-
                         String time = linkAndTime.ownText().replace("'' ", "");
 
                         String details = item.select("div.col-xs-9").first().text();
 
-                        items.add(new NewsFeedItem(className, time, details, link));
+                        items.add(new NewsFeedItem(className.text(), time, details, link));
                     }
                 }
             } catch (Exception e) {

@@ -1,7 +1,7 @@
 package com.nicholasnassar.sfsapi.data.links;
 
 public enum LinkType {
-    GRADE("grade", "StudentProgressView.aspx", "ClassID="),
+    GRADE("grade", "StudentProgressView.aspx|StudentProgressDetails.aspx", "ClassID="),
     ASSIGNMENT("assignment", "AssignmentView.aspx", "TestNameID="),
     ANNOUNCEMENT("announcement", "parents/AnnouncementView.aspx", "AnnouncementID=");
 
@@ -23,7 +23,17 @@ public enum LinkType {
         outerLoop:
         for (LinkType type : values()) {
             for (String matchingPhrase : type.matching) {
-                if (!match.contains(matchingPhrase)) {
+                String[] matchingPhrases = matchingPhrase.split("\\|");
+
+                boolean hitOne = false;
+
+                for (String goodName : matchingPhrases) {
+                    if (match.contains(goodName)) {
+                        hitOne = true;
+                    }
+                }
+
+                if (!hitOne) {
                     continue outerLoop;
                 }
             }
