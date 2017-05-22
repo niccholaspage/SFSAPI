@@ -441,7 +441,7 @@ public class SFS {
 
                     maxGPA += halfCredit ? scale.getScore(LetterGrade.A_PLUS) / 2 : scale.getScore(LetterGrade.A_PLUS);
 
-                    classes.add(new GPAClass(grade.getClazz(), letterGrade.getName(), classScore + ""));
+                    classes.add(new GPAClass(grade.getClazz(), letterGrade.getMyName(), classScore + ""));
                 }
 
                 if (classesCount == 0) {
@@ -480,20 +480,22 @@ public class SFS {
 
                 Element mainContainer = document.select("div#mainContainer").first();
 
-                for (Element element : mainContainer.select("div.curricula-item")) {
-                    Element activity = element.getElementsByTag("h4").first().select("a").first();
+                if (mainContainer != null) {
+                    for (Element element : mainContainer.select("div.curricula-item")) {
+                        Element activity = element.getElementsByTag("h4").first().select("a").first();
 
-                    Element due = element.select("div.due").first();
+                        Element due = element.select("div.due").first();
 
-                    String name = due.text().substring(0, due.text().indexOf(" Due: "));
+                        String name = due.text().substring(0, due.text().indexOf(" Due: "));
 
-                    String dueDate = due.text().substring(due.text().indexOf(" Due: ") + 6);
+                        String dueDate = due.text().substring(due.text().indexOf(" Due: ") + 6);
 
-                    int resources = element.select("i.cmg.small.resources").size();
+                        int resources = element.select("i.cmg.small.resources").size();
 
-                    String id = activity.attr("href").replace("AssignmentView.aspx?TestNameID=", "");
+                        String id = activity.attr("href").replace("AssignmentView.aspx?TestNameID=", "");
 
-                    assignments.add(new AssignmentTaskList(id, name, activity.text(), "Due " + dueDate, resources));
+                        assignments.add(new AssignmentTaskList(id, name, activity.text(), "Due " + dueDate, resources));
+                    }
                 }
 
                 return assignments;
@@ -603,7 +605,7 @@ public class SFS {
             List<AssignmentAll> assignments = new ArrayList<>();
 
             try {
-                Element tableBody = document.select("table#tblMain > tbody").first();
+                Element tableBody = document.select("table#AllAssignmentsTable > tbody").first();
 
                 for (Element tableRow : tableBody.children()) {
                     if (tableRow.children().size() == 1) {
@@ -623,9 +625,7 @@ public class SFS {
 
                         String notes = tableRow.child(3).text();
 
-                        String resources = tableRow.child(4).text();
-
-                        assignments.add(new AssignmentAll(assignmentId, due, clazz, assignment.text(), notes, resources));
+                        assignments.add(new AssignmentAll(assignmentId, due, clazz, assignment.text(), notes, ""));
                     }
                 }
             } catch (Exception e) {
