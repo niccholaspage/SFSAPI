@@ -4,9 +4,9 @@ import com.nicholasnassar.sfsapi.data.links.Link
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 
-class GradeAssignment(val link: Link?, val dateDue: String, val category: String, val assignment: String,
-                      val possiblePoints: String, val score: String, val percentage: String, val letterGrade: String,
-                      val comments: String) {
+class GradeAssignment(val link: Link?, val dateDue: String?, val category: String?, val assignment: String?,
+                      val possiblePoints: String?, val score: String?, val percentage: String?, val letterGrade: String?,
+                      val comments: String?) {
     fun asJson(): JsonObject {
         return JsonObject().put("link", link?.asJson()).put("date_due", dateDue)
                 .put("category", category).put("assignment", assignment).put("possible_points", possiblePoints)

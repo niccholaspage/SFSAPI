@@ -5,14 +5,18 @@ public enum LinkType {
     ASSIGNMENT("assignment", "AssignmentView.aspx", "TestNameID="),
     ANNOUNCEMENT("announcement", "parents/AnnouncementView.aspx", "AnnouncementID=");
 
-    private final String name;
+    private final String dataName;
 
     private final String[] matching;
 
-    LinkType(String name, String... matching) {
-        this.name = name;
+    LinkType(String dataName, String... matching) {
+        this.dataName = dataName;
 
         this.matching = matching;
+    }
+
+    public String getDataName() {
+        return dataName;
     }
 
     private static LinkType matchType(String match) {
