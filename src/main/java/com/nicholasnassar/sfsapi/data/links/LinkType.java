@@ -15,10 +15,6 @@ public enum LinkType {
         this.matching = matching;
     }
 
-    public String getName() {
-        return name;
-    }
-
     private static LinkType matchType(String match) {
         outerLoop:
         for (LinkType type : values()) {

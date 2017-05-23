@@ -23,7 +23,7 @@ class Resource(val name: String, val link: String) {
 
         val RESOURCE_EXTERNAL = 1
 
-        @JvmStatic fun asJsonArray(resources: List<Resource>): JsonArray {
+        fun asJsonArray(resources: List<Resource>): JsonArray {
             val array = JsonArray()
 
             resources.forEach { resource -> array.add(resource.asJson()) }
