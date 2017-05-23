@@ -180,18 +180,6 @@ class WebHandler {
             api.fetchAnnouncement(json.getString("cookie"), json.getString("id")).thenAccept { announcement -> ctx.response().end(announcement.asJson().encode()) }
         }
 
-        router.post("/reportcard").handler { ctx ->
-            if (!processContext(ctx)) {
-                return@handler
-            }
-
-            ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/pdf")
-
-            val json = ctx.bodyAsJson
-
-            api.fetchReportCard(json.getString("cookie")).thenAccept { html -> ctx.response().end(html) }
-        }
-
         vertx.createHttpServer().requestHandler(router::accept).listen(5000)
 
         println("Website started!")
